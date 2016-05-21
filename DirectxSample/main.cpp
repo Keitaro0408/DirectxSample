@@ -7,9 +7,8 @@
 
 /**
 *@mainpage
-ゲー研のソースコードを元にライブラリを作っていきます。
+*ゲーム開発研究部サンプルコード
 */
-
 #pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "d3d9.lib")
 #pragma comment(lib, "d3dx9.lib")
@@ -26,20 +25,10 @@ struct CUSTOMVERTEX
 
 enum TEXTURE
 {
-	BACKGROUND,
-	PLAYER,
+	BACKGROUND_TEX,
+	PLAYER_TEX,
 	TEXMAX
 };
-
-
-enum SCENE
-{
-	TITLE_SCENE,
-	GAME_SCENE,
-	GAMEOVER_SCENE,
-	MAX_SCENE
-} current_scene;
-
 
 
 LPDIRECT3DTEXTURE9 pTexture[TEXMAX];	//	画像の情報を入れておく為のポインタ配列
@@ -50,16 +39,25 @@ D3DPRESENT_PARAMETERS D3dPresentParameters;		//	パラメーター
 D3DDISPLAYMODE D3DdisplayMode;
 IDirect3D9*			pDirect3D;		//	Direct3Dのインターフェイス
 
-//-------------------------------------------------------------
-//
-//	制御処理
-//
-//-------------------------------------------------------------
-
+/**
+*制御処理
+*/
 void Control(void)
 {
 	static float playerPos = 0.f;
 
+}
+
+void PosSet(CUSTOMVERTEX* _vertex,D3DXVECTOR2 _pos, float scale)
+{
+	_vertex[0].x = _pos.x - scale;
+	_vertex[0].y = _pos.y - scale;
+	_vertex[1].x = _pos.x + scale;
+	_vertex[1].y = _pos.y + scale;
+	_vertex[2].x = _pos.x + scale;
+	_vertex[2].y = _pos.y + scale;
+	_vertex[3].x = _pos.x + scale;
+	_vertex[3].y = _pos.y + scale;
 }
 
 /**
@@ -67,31 +65,40 @@ void Control(void)
 */
 void Render(void)
 {
-	if (!pD3Device) return;
+	//頂点情報を入れる--------------------------------------
 	CUSTOMVERTEX backGround[4]
 	{
-		{ 0.f, 0.f, 1.f, 1.f, 0xFFFFFFFF, 0.f, 0.f },
-		{ 1280.f, 0.f, 1.f, 1.f, 0xFFFFFFFF, 1.f, 0.f },
-		{ 1280.f, 720.f, 1.f, 1.f, 0xFFFFFFFF, 1.f, 1.f },
-		{ 0.f, 720.f, 1.f, 1.f, 0xFFFFFFFF, 0.f, 1.f }
+		{	 0.f,   0.f, 1.f,1.f, 0xFFFFFFFF, 0.f, 0.f },
+		{ 1280.f,   0.f, 1.f,1.f, 0xFFFFFFFF, 1.f, 0.f },
+		{ 1280.f, 720.f, 1.f,1.f, 0xFFFFFFFF, 1.f, 1.f },
+		{	 0.f, 720.f, 1.f,1.f, 0xFFFFFFFF, 0.f, 1.f }
 	};
+
+	CUSTOMVERTEX player[4]
+	{
+		{ 500.f, 250.f, 1.f, 1.f, 0xFFFFFFFF, 0.f, 0.f },
+		{ 700.f, 250.f, 1.f, 1.f, 0xFFFFFFFF, 1.f, 0.f },
+		{ 700.f, 450.f, 1.f, 1.f, 0xFFFFFFFF, 1.f, 1.f },
+		{ 500.f, 450.f, 1.f, 1.f, 0xFFFFFFFF, 0.f, 1.f }
+	};
+	//-----------------------------------------------------
+
 
 	//画面の消去
 	pD3Device->Clear(0, NULL,
-		D3DCLEAR_TARGET,
-		D3DCOLOR_XRGB(0x00, 0x00, 0x00),
-		1.0, 0);
+					 D3DCLEAR_TARGET,
+					 D3DCOLOR_XRGB(0x00, 0x00, 0x00),
+					 1.0, 0);
+
 	//描画の開始
-	pD3Device->SetFVF(D3DFVF_CUSTOMVERTEX);
 	pD3Device->BeginScene();
 
-	pD3Device->SetTexture(0, pTexture[BACKGROUND]);
-	pD3Device->DrawPrimitiveUP(
-		D3DPT_TRIANGLEFAN,
-		2,
-		backGround,
-		sizeof(CUSTOMVERTEX));
+	pD3Device->SetTexture(0, pTexture[BACKGROUND_TEX]);
+	pD3Device->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, backGround, sizeof(CUSTOMVERTEX));
+	
 
+	pD3Device->SetTexture(0, pTexture[PLAYER_TEX]);
+	pD3Device->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, player, sizeof(CUSTOMVERTEX));
 
 	//描画の終了
 	pD3Device->EndScene();
@@ -99,11 +106,9 @@ void Render(void)
 	pD3Device->Present(NULL, NULL, NULL, NULL);
 }
 
-//-------------------------------------------------------------
-//
-//	メッセージ処理
-//
-//-------------------------------------------------------------
+/**
+*メッセージ処理
+*/
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
 
 	switch (msg) {
@@ -127,11 +132,9 @@ VOID FreeDx()
 	SAFE_RELEASE(pDirect3D);
 }
 
-//-------------------------------------------------------------
-//
-//	メインルーチン
-//
-//-------------------------------------------------------------
+/**
+*メインルーチン
+*/
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	PSTR lpCmdLine, int nCmdShow) {
 	MSG msg;
@@ -169,9 +172,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		);
 	if (!hWnd) return 0;
 
-
-	//DirectXの初期化
-
 	//DirectX オブジェクトの生成
 	pDirect3D = Direct3DCreate9(
 		D3D_SDK_VERSION);
@@ -196,6 +196,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		D3DCREATE_SOFTWARE_VERTEXPROCESSING,
 		&D3dPresentParameters, &pD3Device);
 
+	//描画設定
 	pD3Device->SetRenderState(D3DRS_ALPHABLENDENABLE, true);
 	pD3Device->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);  //SRCの設定
 	pD3Device->SetRenderState(D3DRS_DESTBLEND, D3DBLEND_INVSRCALPHA);
@@ -210,11 +211,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	pD3Device->SetTextureStageState(0, D3DTSS_ALPHAARG2, D3DTA_DIFFUSE);
 
 	pD3Device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+	
+	//頂点に入れるデータを設定
+	pD3Device->SetFVF(D3DFVF_CUSTOMVERTEX);
 
 	D3DXCreateTextureFromFile(
 		pD3Device,
-		"gochiusa.jpg",
-		&pTexture[BACKGROUND]);
+		"RabbitHouse.png",
+		&pTexture[BACKGROUND_TEX]);
+
+	D3DXCreateTextureFromFile(
+		pD3Device,
+		"robo.png",
+		&pTexture[PLAYER_TEX]);
 
 	DWORD SyncOld = timeGetTime();	//	システム時間を取得
 	DWORD SyncNow;
