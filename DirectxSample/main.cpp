@@ -4,6 +4,9 @@
 
 #define TITLE 	TEXT("Basic of Game")
 #define D3DFVF_CUSTOMVERTEX (D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
+#define DISPLAY_WIDTH 1280
+#define DISPLAY_HIGHT 720
+#define MOVE_SPEED 5.f
 
 /**
 *@mainpage
@@ -22,6 +25,10 @@ struct CUSTOMVERTEX
 	FLOAT	tu, tv;
 };
 
+struct PLAYER_STATE
+{
+	float x, y, scale;
+};
 
 enum TEXTURE
 {
@@ -30,35 +37,41 @@ enum TEXTURE
 	TEXMAX
 };
 
+//Directx関係----------------------------
+LPDIRECT3DTEXTURE9	  pTexture[TEXMAX];	//	画像の情報を入れておく為のポインタ配列
+IDirect3DDevice9*	  pD3Device;		//	Direct3Dのデバイス
+D3DPRESENT_PARAMETERS D3dPresentParameters;		//	パラメータ
+D3DDISPLAYMODE		  D3DdisplayMode;
+IDirect3D9*			  pDirect3D;		//	Direct3Dのインターフェイス
+//---------------------------------------
 
-LPDIRECT3DTEXTURE9 pTexture[TEXMAX];	//	画像の情報を入れておく為のポインタ配列
 
-IDirect3DDevice9*	pD3Device;		//	Direct3Dのデバイス
-D3DPRESENT_PARAMETERS D3dPresentParameters;		//	パラメーター
-
-D3DDISPLAYMODE D3DdisplayMode;
-IDirect3D9*			pDirect3D;		//	Direct3Dのインターフェイス
-
+PLAYER_STATE		  Player = { 150.f, 400.f, 100.f };
+bool				  moveRight = true;
 /**
 *制御処理
 */
 void Control(void)
 {
-	static float playerPos = 0.f;
+	if (moveRight)
+	{
+		Player.x += MOVE_SPEED;
+	}
+	else
+	{
+		Player.x -= MOVE_SPEED;
+	}
 
+	if (Player.x >= 1000.f)
+	{
+		moveRight = false;
+	}
+	else if (Player.x <= 150.f)
+	{
+		moveRight = true;
+	}
 }
 
-void PosSet(CUSTOMVERTEX* _vertex,D3DXVECTOR2 _pos, float scale)
-{
-	_vertex[0].x = _pos.x - scale;
-	_vertex[0].y = _pos.y - scale;
-	_vertex[1].x = _pos.x + scale;
-	_vertex[1].y = _pos.y + scale;
-	_vertex[2].x = _pos.x + scale;
-	_vertex[2].y = _pos.y + scale;
-	_vertex[3].x = _pos.x + scale;
-	_vertex[3].y = _pos.y + scale;
-}
 
 /**
 *描画処理
@@ -76,10 +89,10 @@ void Render(void)
 
 	CUSTOMVERTEX player[4]
 	{
-		{ 500.f, 250.f, 1.f, 1.f, 0xFFFFFFFF, 0.f, 0.f },
-		{ 700.f, 250.f, 1.f, 1.f, 0xFFFFFFFF, 1.f, 0.f },
-		{ 700.f, 450.f, 1.f, 1.f, 0xFFFFFFFF, 1.f, 1.f },
-		{ 500.f, 450.f, 1.f, 1.f, 0xFFFFFFFF, 0.f, 1.f }
+		{ Player.x - Player.scale, Player.y - Player.scale, 1.f, 1.f, 0xFFFFFFFF, 0.f, 0.f },
+		{ Player.x + Player.scale, Player.y - Player.scale, 1.f, 1.f, 0xFFFFFFFF, 1.f, 0.f },
+		{ Player.x + Player.scale, Player.y + Player.scale, 1.f, 1.f, 0xFFFFFFFF, 1.f, 1.f },
+		{ Player.x - Player.scale, Player.y + Player.scale, 1.f, 1.f, 0xFFFFFFFF, 0.f, 1.f }
 	};
 	//-----------------------------------------------------
 
@@ -154,17 +167,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	//Windowの登録
 	if (!RegisterClass(&winc)) return 0;
 	//Windowの生成
-	int dH = GetSystemMetrics(SM_CYCAPTION) + GetSystemMetrics(SM_CYFRAME) * 2;
-	int dW = GetSystemMetrics(SM_CXFRAME) * 2;
-	//	ウィンドウを作る
 	hWnd = CreateWindow(
 		TITLE,								//ウィンドウのクラス名
 		TITLE, 							//ウィンドウのタイトル
 		WS_OVERLAPPEDWINDOW | WS_VISIBLE,	//ウィンドウスタイル
 		CW_USEDEFAULT,						// ウィンドウの横方向の位置x
 		CW_USEDEFAULT,						// ウィンドウの縦方向の位置y
-		1280 + dW,							// Width（幅）
-		720 + dH,							// Height（高さ）
+		DISPLAY_WIDTH,							// Width（幅）
+		DISPLAY_HIGHT,							// Height（高さ）
 		NULL,
 		NULL,
 		hInstance,							// アプリケーションインスタンスのハンドル
